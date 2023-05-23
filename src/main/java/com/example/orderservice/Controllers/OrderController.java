@@ -1,33 +1,27 @@
-package com.example.webbshopbackend1.Controllers;
+package com.example.orderservice.Controllers;
 
-import com.example.webbshopbackend1.Models.Customer;
-import com.example.webbshopbackend1.Models.Item;
-import com.example.webbshopbackend1.Models.Orders;
-import com.example.webbshopbackend1.Repos.CustomerRepo;
-import com.example.webbshopbackend1.Repos.ItemRepo;
-import com.example.webbshopbackend1.Repos.OrderRepo;
-import org.springframework.http.MediaType;
+import com.example.orderservice.Models.Customer;
+import com.example.orderservice.Models.Item;
+import com.example.orderservice.Models.Orders;
+import com.example.orderservice.Repos.OrderRepo;
+
+import com.example.orderservice.Services.OrderService;
 import org.springframework.web.bind.annotation.*;
 
 import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Set;
 
 @RestController
 @RequestMapping("/orders")
 public class OrderController {
-
     private final OrderRepo orderRepo;
-    private final CustomerRepo customerRepo;
-    private final ItemRepo itemRepo;
+    private final OrderService orderService;
 
-    OrderController(OrderRepo orderRepo, CustomerRepo customerRepo, ItemRepo itemRepo) {
+    OrderController(OrderRepo orderRepo, OrderService orderService) {
         this.orderRepo = orderRepo;
-        this.customerRepo = customerRepo;
-        this.itemRepo = itemRepo;
+        this.orderService = orderService;
     }
-
     @RequestMapping("/getAll")
     public List<Orders> getAllOrders() {
         return orderRepo.findAll();
@@ -35,36 +29,19 @@ public class OrderController {
 
     @RequestMapping("/getByCustomerId/{customerId}")
     public List<Orders> getOrdersByCustomerId(@PathVariable Long customerId) {
-        List<Orders> orders = orderRepo.findAll();
-        List<Orders> customerOrders = new ArrayList<>();
-        for (Orders order : orders) {
-            if (order.getCustomer().getId() == customerId) {
-                customerOrders.add(order);
-            }
-        }
-        return customerOrders;
-    }
 
+        return orderRepo.findByCustomerId(customerId);
+    }
     @PostMapping(path = "/buy")
-    //curl -X POST -H "Content-Type: application/json" "http://localhost:8080/orders/buy?customerId=1&itemIds=2&itemIds=3"
     public String addOrder(@RequestParam Long customerId, @RequestParam List<Long> itemIds) {
+        Customer customer = orderService.getCustomerById(customerId);
         List<Item> items = new ArrayList<>();
-        for (Long itemId : itemIds) {            //måste gå via en for-loop för att kunna lägga till flera av samma id i samma order
-            Item item = itemRepo.findById(itemId).orElse(null);
-            if (item != null && item.getStock() > 0) {
-                items.add(item);
-                item.setStock(item.getStock() - 1);
-                itemRepo.save(item);
-            } else {      //else sats för att breaka metoden att köra vidare vid fel itemid
-                return "Order failed, item id /ids not found";
-            }
+        for (Long itemId : itemIds) {
+            Item item = orderService.getItemById(itemId);
+            items.add(item);
         }
-        Customer customer = customerRepo.findById(customerId).orElse(null); //orElse(null) krävs för att inte få 500-fel om obefintligt ID anges
-        if (items != null && customer != null && customer.getName() != null) {
-            orderRepo.save(new Orders(LocalDate.now(), customer, items));
-            return "Order added";
-        } else {
-            return "Order failed, customer id not found";
-        }
+        Orders order = new Orders(LocalDate.now(),customer, items);
+        orderRepo.save(order);
+        return "Order added";
     }
 }
