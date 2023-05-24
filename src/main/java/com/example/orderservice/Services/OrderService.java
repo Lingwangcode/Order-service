@@ -27,20 +27,20 @@ public class OrderService {
     }
 
     public Customer getCustomerById(Long customerId) {
-        //String url = customerServiceUrl.replace("{customerId}", String.valueOf(customerId));
-       // return restTemplate.getForObject(url, Customer.class);
-        Customer testCustomer = new Customer("Test Customer1", "test123");
-        customerRepo.save(testCustomer);
-        Customer test = customerRepo.findById(customerId).orElse(null);
-        return test;
+        String url = customerServiceUrl.replace("{customerId}", String.valueOf(customerId));
+        return restTemplate.getForObject(url, Customer.class);
+        //Customer testCustomer = new Customer("Test Customer1", "test123");
+        //customerRepo.save(testCustomer);
+        //Customer test = customerRepo.findById(customerId).orElse(null);
+        //return test;
     }
 
     public Item getItemById(Long itemId) {
-        //String url = itemServiceUrl.replace("{itemId}", String.valueOf(itemId));
-        //return restTemplate.getForObject(url, Item.class);
-        Item testItem = new Item("Test Item", 123, 1);
-        itemRepo.save(testItem);
-        Item test = itemRepo.findById(itemId).orElse(null);
-        return test;
+        String url = itemServiceUrl.replace("{itemId}", String.valueOf(itemId));
+        return restTemplate.getForObject(url, Item.class);
+        //Item testItem = new Item("Test Item", 123, 1);
+        //itemRepo.save(testItem);
+        //Item test = itemRepo.findById(itemId).orElse(null);
+        //return test;
     }
 }
