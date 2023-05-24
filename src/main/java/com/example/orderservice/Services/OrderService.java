@@ -20,8 +20,8 @@ public class OrderService {
 
     public OrderService(CustomerRepo customerRepo, ItemRepo itemRepo) {
         restTemplate = new RestTemplate();
-        customerServiceUrl = "http://customer-service/customer/{customerId}";
-        itemServiceUrl = "http://item-service/item/{itemId}";
+        customerServiceUrl = "http://Customer/8080/{customerId}";
+        itemServiceUrl = "http://Item/8080/{itemId}";
         this.customerRepo = customerRepo;
         this.itemRepo = itemRepo;
     }
