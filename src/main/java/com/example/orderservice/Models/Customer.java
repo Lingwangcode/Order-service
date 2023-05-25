@@ -1,11 +1,12 @@
 package com.example.orderservice.Models;
 
-import jakarta.persistence.Entity;
-import jakarta.persistence.GeneratedValue;
-import jakarta.persistence.Id;
+import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
+
+import java.util.HashSet;
+import java.util.Set;
 
 @Data
 @Entity
@@ -14,13 +15,23 @@ import lombok.NoArgsConstructor;
 public class Customer {
 
     @Id
-    @GeneratedValue
+    //@GeneratedValue(strategy=GenerationType.AUTO)
     private Long id;
-    private String name;
-    private String socialSecurityNumber;
+    private String fullName;
+    @Column(unique = true)
+    private String ssn;
+    @Embedded
+    private Address address;
+    private String email;
 
-    public Customer(String name, String socialSecurityNumber) {
-        this.name = name;
-        this.socialSecurityNumber = socialSecurityNumber;
+    @ElementCollection
+    private Set<listItem> wishlist = new HashSet<>();
+
+
+    public Customer(String fullName, String ssn, Address address, String email) {
+        this.fullName = fullName;
+        this.ssn = ssn;
+        this.address = address;
+        this.email = email;
     }
 }

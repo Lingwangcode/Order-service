@@ -1,0 +1,76 @@
+version: '3'
+services:
+  Customers:
+    image: ghcr.io/annasjoberg/customer-service:latest
+    ports:
+      - "8081:8080"
+    restart: always
+    environment:
+      MYSQL_HOST: customer-mysql
+      DB_USER: CustomerUser
+      DB_PASSWORD: CustomerPassword
+      MYSQL_PORT: 3306
+      DB_DATABASE: db_customer
+    depends_on:
+      - customer-mysql
+
+  customer-mysql:
+    container_name: customer-mysql
+    image: mysql:latest
+    ports:
+      - "3309:3306"
+    environment:
+      MYSQL_DATABASE: db_customer
+      MYSQL_USER: CustomerUser
+      MYSQL_PASSWORD: CustomerPassword
+      MYSQL_RANDOM_ROOT_PASSWORD: "yes"
+
+  Orders:
+    image: ghcr.io/lingwangcode/order-service:latest
+    ports:
+      - "8082:8080"
+    restart: always
+    environment:
+      MYSQL_HOST: order-mysql
+      DB_USER: OrderUser
+      DB_PASSWORD: OrderPassword
+      MYSQL_PORT: 3306
+      DB_DATABASE: db_order
+    depends_on:
+      - order-mysql
+
+  order-mysql:
+    container_name: order-mysql
+    image: mysql:latest
+    ports:
+      - "3311:3306"
+    environment:
+      MYSQL_DATABASE: db_order
+      MYSQL_USER: OrderUser
+      MYSQL_PASSWORD: OrderPassword
+      MYSQL_RANDOM_ROOT_PASSWORD: "yes"
+
+  Items:
+    image: ghcr.io/umm-a/item-service:latest
+    ports:
+      - "8083:8080"
+    restart: always
+    environment:
+      MYSQL_HOST: item-mysql
+      DB_USER: ItemUser
+      DB_PASSWORD: ItemPassword
+      MYSQL_PORT: 3306
+      DB_DATABASE: db_item
+    depends_on:
+      - item-mysql
+
+  item-mysql:
+    container_name: item-mysql
+    image: mysql:latest
+    ports:
+      - "3310:3306"
+    environment:
+      MYSQL_DATABASE: db_item
+      MYSQL_USER: ItemUser
+      MYSQL_PASSWORD: ItemPassword
+      MYSQL_RANDOM_ROOT_PASSWORD: "yes"

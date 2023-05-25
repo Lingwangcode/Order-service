@@ -13,7 +13,7 @@ import lombok.NoArgsConstructor;
 @AllArgsConstructor
 public class Item {
     @Id
-    @GeneratedValue
+    //@GeneratedValue
     private Long id;
     private String name;
     private int price;
