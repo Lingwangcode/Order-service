@@ -1,8 +1,7 @@
 package com.example.orderservice.Models;
 
-import jakarta.persistence.Entity;
-import jakarta.persistence.GeneratedValue;
-import jakarta.persistence.Id;
+import com.fasterxml.jackson.annotation.JsonIgnore;
+import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
@@ -13,15 +12,14 @@ import lombok.NoArgsConstructor;
 @AllArgsConstructor
 public class Item {
     @Id
-    //@GeneratedValue
     private Long id;
     private String name;
-    private int price;
-    private int stock;
+    private String price;
+    private int stock = 0;
 
-    public Item(String name, int price, int stock) {
-        this.name = name;
-        this.price = price;
+    public void setStock(int stock) {
         this.stock = stock;
     }
+
+
 }

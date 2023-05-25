@@ -10,7 +10,9 @@ import java.time.LocalDate;
 
 import java.lang.Long;
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
 @Data
 @Entity
@@ -21,16 +23,16 @@ public class Orders {
     @GeneratedValue
     private Long id;
     private LocalDate date;
+    private Long customerId;
 
-    @ManyToOne
-    @JoinColumn
-    private Customer customer;
     @ManyToMany
     @JoinTable
     private List<Item> items = new ArrayList<>();
-    public Orders(LocalDate ld, Customer customer, List<Item> items) {
+
+    public Orders(LocalDate ld, Long customerId, List<Item> items) {
         this.date = ld;
-        this.customer = customer;
+        this.customerId = customerId;
         this.items = items;
     }
+
 }
