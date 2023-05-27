@@ -24,15 +24,17 @@ public class Orders {
     private Long id;
     private LocalDate date;
     private Long customerId;
+    private int sum;
 
-    @ManyToMany
-    @JoinTable
-    private List<Item> items = new ArrayList<>();
+    @ElementCollection
+    private List<Long> itemIds = new ArrayList<>();
 
-    public Orders(LocalDate ld, Long customerId, List<Item> items) {
+    public Orders(LocalDate ld, Long customerId) {
         this.date = ld;
         this.customerId = customerId;
-        this.items = items;
+    }
+    public void addToItemIds (Long itemId){
+        itemIds.add(itemId);
     }
 
 }

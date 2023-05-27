@@ -11,9 +11,6 @@ public class RestTemplateConfig {
     @Bean
     public RestTemplate restTemplate(){
         RestTemplate restTemplate = new RestTemplate();
-
-        //Detta gör att RestTemplate kan använda Apache HttpClient som HTTP-klient för att göra anropen
-        //restTemplate.setRequestFactory(new HttpComponentsClientHttpRequestFactory());
         return restTemplate;
     }
 }

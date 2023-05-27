@@ -3,9 +3,9 @@ package com.example.orderservice.Controllers;
 import com.example.orderservice.Models.Customer;
 import com.example.orderservice.Models.Item;
 import com.example.orderservice.Models.Orders;
-import com.example.orderservice.Repos.ItemRepo;
 import com.example.orderservice.Repos.OrderRepo;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.client.RestTemplate;
 
@@ -15,17 +15,17 @@ import java.util.*;
 @RestController
 @RequestMapping("/orders")
 public class OrderController {
-
     @Autowired
     private RestTemplate restTemplate;
     private final OrderRepo orderRepo;
+    @Value("${customer-service.url}")
+            private String customerServiceUrl;
+    @Value("${item-service.url}")
+            private String itemServiceUrl;
 
-    private final ItemRepo itemRepo;
-
-    OrderController(OrderRepo orderRepo, RestTemplate restTemplate, ItemRepo itemRepo) {
+    OrderController(OrderRepo orderRepo, RestTemplate restTemplate) {
         this.orderRepo = orderRepo;
         this.restTemplate = restTemplate;
-        this.itemRepo = itemRepo;
     }
     @RequestMapping("/getAll")
     public List<Orders> getAllOrders() {
@@ -38,31 +38,39 @@ public class OrderController {
         return orderRepo.findByCustomerId(customerId);
     }
     @PostMapping(path = "/buy")
-    public String addOrder(@RequestParam Long customerId, @RequestParam List<Long> itemIds) {
-        Customer customer = restTemplate.getForObject("http://Customers:8080/customers/getById/"+ customerId, Customer.class);
-        List<Item> items = new ArrayList<>();
-        for (Long itemId : itemIds) {
-            Item item = restTemplate.getForObject("http://Items:8080/items/getById/" + itemId, Item.class);
+    public List<String> addOrder(@RequestParam Long customerId, @RequestParam List<Long> itemIds) {
+        List<String> result = new ArrayList<>();    //RETURNERAR EN LIST<STRING> FÖR ATT VISA VILKA ITEMS SOM KUNDE LÄGGAS TILL.
+        String customerUrl = customerServiceUrl + "/customers/getById/" + customerId;
+        Customer customer = restTemplate.getForObject(customerUrl, Customer.class);
+        if (customer == null) { //FLYTTAT UPP OCH ÄNDRAT TILL == ISTÄLLET FÖR !=
+            result.add("Customer not found, no order placed");
+        } else {
+            Orders order = new Orders(LocalDate.now(), customer.getId());   //SKAPAR UPP EN INSTANS AV 'ORDER'
+            for (Long itemId : itemIds) {
+                String itemUrl = itemServiceUrl + "/items/getById/" + itemId;
+                Item item = restTemplate.getForObject(itemUrl, Item.class); //BORDE ISTÄLLET ANROPA EN ANNAN FUNKTION I 'ITEMS' SOM OCKSÅ UPPDATERAR ITEMS-DATABASEN
+                if (item != null) {
+                    order.addToItemIds(itemId); //LÄGGA TILL I LISTAN AV ITEMIDS
+                    order.setSum(order.getSum() + item.getPrice()); //LÄGGA PÅ VARANS PRIS TILL TOTALSUMMAN
 
-            if(item != null){
-               // item.setStock(1);
-               items.add(item);
-              // itemRepo.save(item);
+                    result.add("Item " + itemId + " added successfully");   //LÄGGA TILL RESPONS PÅ ATT DET LYCKATS
+                } else {
+                    result.add("Item " + itemId + " not found");
+                }
             }
-            else return "Item not found";
+            if (!order.getItemIds().isEmpty()) {//OM DET KUNNAT ADDAS NÅGRA ITEMIDS TILL LISTAN
+                orderRepo.save(order);  //ORDERN SPARAS I DATABASEN
+                result.add("Order added");
+            }else {
+                result.add("No items to buy. Order cancelled");
+            }
         }
-        if (customer!=null){
-            Orders order = new Orders(LocalDate.now(),customer.getId(),items);
-            orderRepo.save(order);
-            return "Order added";
-        }
-        else
-            return "Customer not found";
+        return result;
     }
 
-    @GetMapping("/getAllCustomers")
+    @GetMapping("/getAllCustomers") //For test only
     public @ResponseBody Customer[] getCustomers() {
 
-        return restTemplate.getForObject("http://Customers:8080/customers/getAll" , Customer[].class);
+        return restTemplate.getForObject(customerServiceUrl + "/customers/getAll" , Customer[].class);
     }
 }
