@@ -7,6 +7,7 @@ import com.example.orderservice.Repos.OrderRepo;
 import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.client.RestTemplate;
 
@@ -14,6 +15,7 @@ import java.time.LocalDate;
 import java.util.*;
 
 @RestController
+@Validated
 @RequestMapping("/orders")
 public class OrderController {
     @Autowired
