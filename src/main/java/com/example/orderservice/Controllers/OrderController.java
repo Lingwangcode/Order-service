@@ -44,7 +44,8 @@ public class OrderController {
     }
     @PostMapping(path = "/buy")
     @Retryable(
-            value = {HttpClientErrorException.class, HttpServerErrorException.class},
+            exceptionExpression = "#{#root.cause instanceof T(org.springframework.web.client.HttpClientErrorException) " +
+                    "|| #root.cause instanceof T(org.springframework.web.client.HttpServerErrorException)}",
             maxAttempts = 3,
             backoff = @Backoff(delay = 1000) // 1 sekund försening mellan försök
     )
