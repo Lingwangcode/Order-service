@@ -4,6 +4,7 @@ import com.example.orderservice.Models.Customer;
 import com.example.orderservice.Models.Item;
 import com.example.orderservice.Models.Orders;
 import com.example.orderservice.Repos.OrderRepo;
+import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.web.bind.annotation.*;
@@ -38,7 +39,7 @@ public class OrderController {
         return orderRepo.findByCustomerId(customerId);
     }
     @PostMapping(path = "/buy")
-    public List<String> addOrder(@RequestParam Long customerId, @RequestParam List<Long> itemIds) {
+    public List<String> addOrder(@RequestParam Long customerId, @Valid @RequestParam List<Long> itemIds) {
         List<String> result = new ArrayList<>();    //RETURNERAR EN LIST<STRING> FÖR ATT VISA VILKA ITEMS SOM KUNDE LÄGGAS TILL.
         String customerUrl = customerServiceUrl + "/customers/getById/" + customerId;
         Customer customer = restTemplate.getForObject(customerUrl, Customer.class);
