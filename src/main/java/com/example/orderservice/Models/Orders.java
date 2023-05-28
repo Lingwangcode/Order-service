@@ -5,6 +5,7 @@ import jakarta.persistence.*;
 import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.NotEmpty;
 import jakarta.validation.constraints.NotNull;
+import jakarta.validation.constraints.Past;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
@@ -26,9 +27,9 @@ public class Orders {
     @GeneratedValue
     private Long id;
     @NotNull
+    @Past(message = "Enter valid date.")
     private LocalDate date;
     private Long customerId; //Får vara null ifall kund raderas från databasen
-    @NotNull(message = "Order can not be given for free!")
     @Min(value = 0, message = "Price has to be above 0!")
     private int sum;
 
