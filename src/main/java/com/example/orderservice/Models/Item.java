@@ -24,5 +24,6 @@ public class Item {
     @Min(value = 1, message = "Item is not supposed to be given free!")
     private int price;
     @JsonIgnore
+    @Min(value = 0, message = "No value below 0!")
     private int stock;
 }
