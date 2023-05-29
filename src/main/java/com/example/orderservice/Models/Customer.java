@@ -19,6 +19,7 @@ public class Customer {
     @Id
     private Long id;
     @NotBlank(message = "Full name missing")
+    @Size(min = 2, max = 70, message = "Full name has to be between 2 and 70 characters")
     private String fullName;
     @Column (unique = true)
     @NotBlank(message = "Must not be blank")
