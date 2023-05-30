@@ -73,6 +73,35 @@ public class OrderController {
         }
         return result;
     }
+    @PostMapping(path = "/buy/{customerId}")
+    public List<String> addOrderPV(@PathVariable Long customerId, @RequestBody List<Long> itemIds) {
+        List<String> result = new ArrayList<>();
+        Customer customer = restTemplate.getForObject("http://Customers:8080/customers/getById/" + customerId, Customer.class);
+        if (customer == null) {
+            result.add("Customer not found, no order placed");
+        } else {
+            //List<Item> items = new ArrayList<>();
+            Orders order = new Orders(LocalDate.now(), customer.getId());
+            for (Long itemId : itemIds) {
+                Item item = restTemplate.getForObject("http://Items:8080/items/getById/" + itemId, Item.class);
+                if (item != null) {
+                    order.addToItemIds(itemId);
+                    order.setSum(order.getSum() + item.getPrice());
+                    //items.add(item);
+                    result.add("Item " + itemId + " added successfully");
+                } else {
+                    result.add("Item " + itemId + " not found");
+                }
+            }
+            if (!order.getItemIds().isEmpty()) {
+                orderRepo.save(order);
+                result.add("Order added");
+            }else {
+                result.add("No items to buy. Order cancelled");
+            }
+        }
+        return result;
+    }
 
     @GetMapping("/getAllCustomers") //For test only
     public @ResponseBody Customer[] getCustomers() {
