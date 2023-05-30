@@ -59,7 +59,8 @@ public class OrderController {
                 String itemUrl = itemServiceUrl + "/items/getById/" + itemId;
                 Item item = restTemplate.getForObject(itemUrl, Item.class); //BORDE ISTÄLLET ANROPA EN ANNAN FUNKTION I 'ITEMS' SOM OCKSÅ UPPDATERAR ITEMS-DATABASEN
                 if (item == null) {
-                    throw new EntityNotFoundException("Item not found with ID: " + itemId);
+                    result.add("Item not found with ID: " + itemId);
+                 //   throw new EntityNotFoundException("Item not found with ID: " + itemId);
                 } else {
                     order.addToItemIds(itemId); //LÄGGA TILL I LISTAN AV ITEMIDS
                     order.setSum(order.getSum() + item.getPrice()); //LÄGGA PÅ VARANS PRIS TILL TOTALSUMMAN
