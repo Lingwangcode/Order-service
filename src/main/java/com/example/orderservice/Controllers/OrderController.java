@@ -18,6 +18,8 @@ import org.springframework.web.client.RestTemplate;
 
 import java.time.LocalDate;
 import java.util.*;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 @RestController
 @Validated
@@ -65,7 +67,6 @@ public class OrderController {
                     result.add("Item " + itemId + " added successfully");   //LÄGGA TILL RESPONS PÅ ATT DET LYCKATS
                 } else {
                     throw new EntityNotFoundException("Item not found with ID: " + itemId);
-
                 }
             }
             if (!order.getItemIds().isEmpty()) {//OM DET KUNNAT ADDAS NÅGRA ITEMIDS TILL LISTAN
@@ -73,6 +74,45 @@ public class OrderController {
                 result.add("Order added");
             }else {
                 result.add("No items to buy. Order cancelled");
+            }
+        }
+        return result;
+    }
+
+    @PostMapping(path = "/buyWSell")
+    @Retryable
+    public List<String> addOrderSell(@RequestParam Long customerId, @RequestParam List<Long> itemIds) {
+        List<String> result = new ArrayList<>();    //RETURNERAR EN LIST<STRING> FÖR ATT VISA VILKA ITEMS SOM KUNDE LÄGGAS TILL.
+        String customerUrl = customerServiceUrl + "/customers/getById/" + customerId;
+        Customer customer = restTemplate.getForObject(customerUrl, Customer.class);
+        if (customer == null) { //FLYTTAT UPP OCH ÄNDRAT TILL == ISTÄLLET FÖR !=
+            throw new EntityNotFoundException("Customer not found with ID: " + customerId);
+        } else {
+            Orders order = new Orders(LocalDate.now(), customer.getId());   //SKAPAR UPP EN INSTANS AV 'ORDER'
+            for (Long itemId : itemIds) {
+                String itemUrl = itemServiceUrl + "/items/sell/" + itemId;
+                String response =restTemplate.getForObject(itemUrl, String.class);
+
+                Pattern pattern = Pattern.compile("price: (\\d+)SEK");
+                Matcher matcher = pattern.matcher(response);
+
+                if (matcher.find()) {
+                    order.addToItemIds(itemId); //LÄGGA TILL I LISTAN AV ITEMIDS
+                    int price = Integer.parseInt(matcher.group(1));
+                    order.setSum(order.getSum() + price); //LÄGGA PÅ VARANS PRIS TILL TOTALSUMMAN
+
+                    result.add("Item " + itemId + " added successfully");   //LÄGGA TILL RESPONS PÅ ATT DET LYCKATS
+                } else {
+                    //throw new EntityNotFoundException("Item not found with ID: " + itemId);
+                    result.add("Item not found with ID: " + itemId);
+                }
+            }
+            if (!order.getItemIds().isEmpty()) {//OM DET KUNNAT ADDAS NÅGRA ITEMIDS TILL LISTAN
+                orderRepo.save(order);  //ORDERN SPARAS I DATABASEN
+                result.add("Order added");
+            }else {
+                throw new EntityNotFoundException("No available items in order");
+                //result.add("No items to buy. Order cancelled");
             }
         }
         return result;
