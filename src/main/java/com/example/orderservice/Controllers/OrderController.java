@@ -5,6 +5,7 @@ import com.example.orderservice.Models.Item;
 import com.example.orderservice.Models.Orders;
 import com.example.orderservice.Repos.OrderRepo;
 import jakarta.persistence.EntityNotFoundException;
+import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.ResponseEntity;
@@ -44,41 +45,34 @@ public class OrderController {
     }
     @PostMapping(path = "/buy")
     @Retryable
-    public ResponseEntity<Orders> addOrder(@RequestParam Long customerId, @RequestParam List<Long> itemIds) {
+    public List<String> addOrder(@RequestParam Long customerId, @Valid @RequestParam List<Long> itemIds) {
+        List<String> result = new ArrayList<>();    //RETURNERAR EN LIST<STRING> FÖR ATT VISA VILKA ITEMS SOM KUNDE LÄGGAS TILL.
+        String customerUrl = customerServiceUrl + "/customers/getById/" + customerId;
+        Customer customer = restTemplate.getForObject(customerUrl, Customer.class);
+        if (customer == null) { //FLYTTAT UPP OCH ÄNDRAT TILL == ISTÄLLET FÖR !=
+            throw new EntityNotFoundException("Customer not found with ID: " + customerId);
+        } else {
+            Orders order = new Orders(LocalDate.now(), customer.getId());   //SKAPAR UPP EN INSTANS AV 'ORDER'
+            for (Long itemId : itemIds) {
+                String itemUrl = itemServiceUrl + "/items/getById/" + itemId;
+                Item item = restTemplate.getForObject(itemUrl, Item.class); //BORDE ISTÄLLET ANROPA EN ANNAN FUNKTION I 'ITEMS' SOM OCKSÅ UPPDATERAR ITEMS-DATABASEN
+                if (item != null) {
+                    order.addToItemIds(itemId); //LÄGGA TILL I LISTAN AV ITEMIDS
+                    order.setSum(order.getSum() + item.getPrice()); //LÄGGA PÅ VARANS PRIS TILL TOTALSUMMAN
 
-        List<String> result = new ArrayList<>();
-
-
-            String customerUrl = customerServiceUrl + "/customers/getById/" + customerId;
-            Customer customer = restTemplate.getForObject(customerUrl, Customer.class);
-            Orders order = new Orders(LocalDate.now(), customer.getId());
-            if (customer != null) {
-
-                for (Long itemId : itemIds) {
-
-                        String itemUrl = itemServiceUrl + "/items/getById/" + itemId;
-                        Item item = restTemplate.getForObject(itemUrl, Item.class);
-
-                        if (item != null) {
-                            order.addToItemIds(itemId);
-                            order.setSum(order.getSum() + item.getPrice());
-                            result.add("Item " + itemId + " added successfully");
-                        } else {
-                            throw new EntityNotFoundException("Item not found with ID: " + itemId);
-                        }
-                }
-
-                if (!order.getItemIds().isEmpty()) {
-                    orderRepo.save(order);
-                   // result.add("Order added");
+                    result.add("Item " + itemId + " added successfully");   //LÄGGA TILL RESPONS PÅ ATT DET LYCKATS
                 } else {
-                    result.add("No items to buy. Order cancelled");
+                    throw new EntityNotFoundException("Item not found with ID: " + itemId);
                 }
-            } else {
-                throw new EntityNotFoundException("Customer not found with ID: " + customerId);
             }
-
-        return ResponseEntity.ok(order);
+            if (!order.getItemIds().isEmpty()) {//OM DET KUNNAT ADDAS NÅGRA ITEMIDS TILL LISTAN
+                orderRepo.save(order);  //ORDERN SPARAS I DATABASEN
+                result.add("Order added");
+            }else {
+                result.add("No items to buy. Order cancelled");
+            }
+        }
+        return result;
     }
 
    /* private <T> T retryOnServiceError(Supplier<T> supplier){ //Hanterar återförsök
