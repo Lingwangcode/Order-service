@@ -4,25 +4,25 @@ import com.example.orderservice.Models.Customer;
 import com.example.orderservice.Models.Item;
 import com.example.orderservice.Models.Orders;
 import com.example.orderservice.Repos.OrderRepo;
+import jakarta.persistence.EntityNotFoundException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.retry.annotation.Backoff;
+import org.springframework.http.ResponseEntity;
 import org.springframework.retry.annotation.Retryable;
 import org.springframework.retry.support.RetryTemplate;
 import org.springframework.web.bind.annotation.*;
-import org.springframework.web.client.HttpClientErrorException;
-import org.springframework.web.client.HttpServerErrorException;
 import org.springframework.web.client.RestTemplate;
 
 import java.time.LocalDate;
 import java.util.*;
-import java.util.function.Supplier;
 
 @RestController
 @RequestMapping("/orders")
 public class OrderController {
     @Autowired
     private RestTemplate restTemplate;
+    @Autowired
+    RetryTemplate retryTemplate;
     private final OrderRepo orderRepo;
     @Value("${customer-service.url}")
             private String customerServiceUrl;
@@ -43,62 +43,54 @@ public class OrderController {
         return orderRepo.findByCustomerId(customerId);
     }
     @PostMapping(path = "/buy")
-    @Retryable(
-            exceptionExpression = "#{#root.cause instanceof T(org.springframework.web.client.HttpClientErrorException) " +
-                    "|| #root.cause instanceof T(org.springframework.web.client.HttpServerErrorException)}",
-            maxAttempts = 3,
-            backoff = @Backoff(delay = 1000) // 1 sekund försening mellan försök
-    )
-    public List<String> addOrder(@RequestParam Long customerId, @RequestParam List<Long> itemIds) {
-        List<String> result = new ArrayList<>();//RETURNERAR EN LIST<STRING> FÖR ATT VISA VILKA ITEMS SOM KUNDE LÄGGAS TILL.
-        try{
-            String customerUrl = customerServiceUrl + "/customers/getById/" + customerId;
-            Customer customer = retryOnServiceError(()-> restTemplate.getForObject(customerUrl, Customer.class));
-            if (customer == null) { //FLYTTAT UPP OCH ÄNDRAT TILL == ISTÄLLET FÖR !=
-                result.add("Customer not found, no order placed");
-            } else {
-                Orders order = new Orders(LocalDate.now(), customer.getId());   //SKAPAR UPP EN INSTANS AV 'ORDER'
-                for (Long itemId : itemIds) {
-                    try{
-                        String itemUrl = itemServiceUrl + "/items/getById/" + itemId;
-                        Item item = retryOnServiceError(()-> restTemplate.getForObject(itemUrl, Item.class)); //BORDE ISTÄLLET ANROPA EN ANNAN FUNKTION I 'ITEMS' SOM OCKSÅ UPPDATERAR ITEMS-DATABASEN
-                        if (item != null) {
-                            order.addToItemIds(itemId); //LÄGGA TILL I LISTAN AV ITEMIDS
-                            order.setSum(order.getSum() + item.getPrice()); //LÄGGA PÅ VARANS PRIS TILL TOTALSUMMAN
+    @Retryable
+    public ResponseEntity<Orders> addOrder(@RequestParam Long customerId, @RequestParam List<Long> itemIds) {
 
-                            result.add("Item " + itemId + " added successfully");   //LÄGGA TILL RESPONS PÅ ATT DET LYCKATS
+        List<String> result = new ArrayList<>();
+
+
+            String customerUrl = customerServiceUrl + "/customers/getById/" + customerId;
+            Customer customer = restTemplate.getForObject(customerUrl, Customer.class);
+            Orders order = new Orders(LocalDate.now(), customer.getId());
+            if (customer != null) {
+
+                for (Long itemId : itemIds) {
+
+                        String itemUrl = itemServiceUrl + "/items/getById/" + itemId;
+                        Item item = restTemplate.getForObject(itemUrl, Item.class);
+
+                        if (item != null) {
+                            order.addToItemIds(itemId);
+                            order.setSum(order.getSum() + item.getPrice());
+                            result.add("Item " + itemId + " added successfully");
                         } else {
-                            result.add("Item " + itemId + " not found");
+                            throw new EntityNotFoundException("Item not found with ID: " + itemId);
                         }
-                    }catch (HttpServerErrorException | HttpClientErrorException e){
-                        result.add("Failed to retrieve item " + itemId + ": " + e.getMessage());
-                    }
                 }
-                if (!order.getItemIds().isEmpty()) {//OM DET KUNNAT ADDAS NÅGRA ITEMIDS TILL LISTAN
-                    orderRepo.save(order);  //ORDERN SPARAS I DATABASEN
-                    result.add("Order added");
-                }else {
+
+                if (!order.getItemIds().isEmpty()) {
+                    orderRepo.save(order);
+                   // result.add("Order added");
+                } else {
                     result.add("No items to buy. Order cancelled");
                 }
+            } else {
+                throw new EntityNotFoundException("Customer not found with ID: " + customerId);
             }
 
-        }catch (HttpServerErrorException | HttpClientErrorException e){
-            result.add("Failed to retrieve customer " + customerId + ": " + e.getMessage());
-        }catch (Exception e){
-            result.add("Faild to retrieve data: " + e.getMessage());
-        }
-        return result;
+        return ResponseEntity.ok(order);
     }
 
-    private <T> T retryOnServiceError(Supplier<T> supplier){ //Hanterar återförsök
-        RetryTemplate retryTemplate = new RetryTemplate();
-        try{
-            return retryTemplate.execute(context -> supplier.get());
-        }catch (Exception e){
-            System.out.println("Something went wrong during retry: " + e.getMessage());
-            throw e;
-        }
+   /* private <T> T retryOnServiceError(Supplier<T> supplier){ //Hanterar återförsök
+
+            return retryTemplate.execute(context -> {
+                System.out.println("Performing retry...");
+                return supplier.get();
+            });
+
     }
+
+    */
 
     @GetMapping("/getAllCustomers") //Endast för att testa ansluting
     public @ResponseBody Customer[] getCustomers() {
