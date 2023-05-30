@@ -34,7 +34,6 @@ public class Orders {
     private int sum;
 
     @ElementCollection
-    @NotEmpty(message = "An order needs items!")
     private List<Long> itemIds = new ArrayList<>();
 
     public Orders(LocalDate ld, Long customerId) {
