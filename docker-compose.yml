@@ -5,6 +5,7 @@ services:
     ports:
       - "8081:8080"
     restart: always
+
     environment:
       MYSQL_HOST: customer-mysql
       DB_USER: CustomerUser
@@ -33,6 +34,7 @@ services:
     ports:
       - "8082:8080"
     restart: always
+
     environment:
       MYSQL_HOST: order-mysql
       DB_USER: OrderUser
@@ -53,13 +55,15 @@ services:
       MYSQL_PASSWORD: ${ORDERS_PASSWORD}
       MYSQL_RANDOM_ROOT_PASSWORD: yes
 
+
   Items:
     image: ghcr.io/umm-a/item-service:latest
     ports:
       - "8083:8080"
     restart: always
+
     environment:
-      CUSTOMER_SERVICE_URL: http://customers:8080/
+      CUSTOMER_SERVICE_URL: http://Customers:8080
       MYSQL_HOST: item-mysql
       DB_USER: ItemUser
       DB_PASSWORD: ${ITEM_PASSWORD}

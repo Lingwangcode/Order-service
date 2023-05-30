@@ -62,6 +62,7 @@ public class OrderController {
                     result.add("Item " + itemId + " added successfully");   //LÄGGA TILL RESPONS PÅ ATT DET LYCKATS
                 } else {
                     result.add("Item " + itemId + " not found");
+
                 }
             }
             if (!order.getItemIds().isEmpty()) {//OM DET KUNNAT ADDAS NÅGRA ITEMIDS TILL LISTAN
@@ -78,6 +79,7 @@ public class OrderController {
     public @ResponseBody Customer[] getCustomers() {
 
         return restTemplate.getForObject(customerServiceUrl + "/customers/getAll" , Customer[].class);
+
     }
 
     @ResponseStatus(HttpStatus.BAD_REQUEST)
