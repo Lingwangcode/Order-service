@@ -27,7 +27,6 @@ public class Orders {
     @GeneratedValue
     private Long id;
     @NotNull
-    @Past(message = "Enter valid date.")
     private LocalDate date;
     private Long customerId; //Får vara null ifall kund raderas från databasen
     @Min(value = 0, message = "Price has to be above 0!")
