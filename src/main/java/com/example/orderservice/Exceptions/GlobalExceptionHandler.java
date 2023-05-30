@@ -11,7 +11,7 @@ import java.time.LocalDateTime;
 public class GlobalExceptionHandler {
     @ExceptionHandler(EntityNotFoundException.class)
     public ResponseEntity<String> handleEntityNotFoundException(Exception e){
-        // log.warn("handleEntityNotFoundException: " + e.getMessage());
+
         return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(HttpStatus.INTERNAL_SERVER_ERROR
                 + ": " + e.getMessage() + ". " + LocalDateTime.now());
     }
