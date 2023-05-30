@@ -4,10 +4,12 @@ import com.example.orderservice.Models.Customer;
 import com.example.orderservice.Models.Item;
 import com.example.orderservice.Models.Orders;
 import com.example.orderservice.Repos.OrderRepo;
+import jakarta.persistence.EntityNotFoundException;
 import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpStatus;
+import org.springframework.retry.annotation.Retryable;
 import org.springframework.validation.FieldError;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.MethodArgumentNotValidException;
@@ -44,12 +46,13 @@ public class OrderController {
         return orderRepo.findByCustomerId(customerId);
     }
     @PostMapping(path = "/buy")
+    @Retryable
     public List<String> addOrder(@RequestParam Long customerId, @RequestParam List<Long> itemIds) {
         List<String> result = new ArrayList<>();    //RETURNERAR EN LIST<STRING> FÖR ATT VISA VILKA ITEMS SOM KUNDE LÄGGAS TILL.
         String customerUrl = customerServiceUrl + "/customers/getById/" + customerId;
         Customer customer = restTemplate.getForObject(customerUrl, Customer.class);
         if (customer == null) { //FLYTTAT UPP OCH ÄNDRAT TILL == ISTÄLLET FÖR !=
-            result.add("Customer not found, no order placed");
+            throw new EntityNotFoundException("Customer not found with ID: " + customerId);
         } else {
             Orders order = new Orders(LocalDate.now(), customer.getId());   //SKAPAR UPP EN INSTANS AV 'ORDER'
             for (Long itemId : itemIds) {
@@ -61,7 +64,7 @@ public class OrderController {
 
                     result.add("Item " + itemId + " added successfully");   //LÄGGA TILL RESPONS PÅ ATT DET LYCKATS
                 } else {
-                    result.add("Item " + itemId + " not found");
+                    throw new EntityNotFoundException("Item not found with ID: " + itemId);
 
                 }
             }
