@@ -8,7 +8,10 @@ services:
     environment:
       MYSQL_HOST: customer-mysql
       DB_USER: CustomerUser
-      DB_PASSWORD: CustomerPassword
+      DB_PASSWORD: ${CUSTOMER_PASSWORD}
+      CUSTOMER_PASSWORD: ${CUSTOMER_PASSWORD}
+      ORDERS_PASSWORD: ${ORDERS_PASSWORD}
+      ITEM_PASSWORD: ${ITEM_PASSWORD}
       MYSQL_PORT: 3306
       DB_DATABASE: db_customer
     depends_on:
@@ -22,8 +25,8 @@ services:
     environment:
       MYSQL_DATABASE: db_customer
       MYSQL_USER: CustomerUser
-      MYSQL_PASSWORD: CustomerPassword
-      MYSQL_RANDOM_ROOT_PASSWORD: "yes"
+      MYSQL_PASSWORD: ${CUSTOMER_PASSWORD}
+      MYSQL_RANDOM_ROOT_PASSWORD: yes
 
   Orders:
     image: ghcr.io/lingwangcode/order-service:latest
@@ -33,7 +36,7 @@ services:
     environment:
       MYSQL_HOST: order-mysql
       DB_USER: OrderUser
-      DB_PASSWORD: OrderPassword
+      DB_PASSWORD: ${ORDERS_PASSWORD}
       MYSQL_PORT: 3306
       DB_DATABASE: db_order
     depends_on:
@@ -47,8 +50,8 @@ services:
     environment:
       MYSQL_DATABASE: db_order
       MYSQL_USER: OrderUser
-      MYSQL_PASSWORD: OrderPassword
-      MYSQL_RANDOM_ROOT_PASSWORD: "yes"
+      MYSQL_PASSWORD: ${ORDERS_PASSWORD}
+      MYSQL_RANDOM_ROOT_PASSWORD: yes
 
   Items:
     image: ghcr.io/umm-a/item-service:latest
@@ -56,9 +59,10 @@ services:
       - "8083:8080"
     restart: always
     environment:
+      CUSTOMER_SERVICE_URL: http://customers:8080/
       MYSQL_HOST: item-mysql
       DB_USER: ItemUser
-      DB_PASSWORD: ItemPassword
+      DB_PASSWORD: ${ITEM_PASSWORD}
       MYSQL_PORT: 3306
       DB_DATABASE: db_item
     depends_on:
@@ -72,5 +76,5 @@ services:
     environment:
       MYSQL_DATABASE: db_item
       MYSQL_USER: ItemUser
-      MYSQL_PASSWORD: ItemPassword
-      MYSQL_RANDOM_ROOT_PASSWORD: "yes"
+      MYSQL_PASSWORD: ${ITEM_PASSWORD}
+      MYSQL_RANDOM_ROOT_PASSWORD: yes
