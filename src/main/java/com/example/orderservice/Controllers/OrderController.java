@@ -33,9 +33,8 @@ public class OrderController {
     @Value("${item-service.url}")
             private String itemServiceUrl;
 
-    OrderController(OrderRepo orderRepo, RestTemplate restTemplate) {
+    OrderController(OrderRepo orderRepo) {
         this.orderRepo = orderRepo;
-        this.restTemplate = restTemplate;
     }
     @RequestMapping("/getAll")
     public List<Orders> getAllOrders() {

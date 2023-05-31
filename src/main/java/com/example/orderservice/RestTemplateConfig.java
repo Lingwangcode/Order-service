@@ -12,16 +12,7 @@ import org.springframework.web.client.RestTemplate;
 @Configuration
 public class RestTemplateConfig {
     private static final int CONNECTION_TIMEOUT = 5000;
-    private static final int READ_TIMEOUT = 5000;
-
-    @Bean
-    public RetryTemplate retryTemplate(){
-        RetryTemplate retryTemplate = new RetryTemplate();
-        SimpleRetryPolicy retryPolicy = new SimpleRetryPolicy();
-        retryPolicy.setMaxAttempts(3);
-        retryTemplate.setRetryPolicy(retryPolicy);
-        return retryTemplate;
-    }
+    private static final int READ_TIMEOUT = 5000; //testa med 5
 
     @Bean
     public RestTemplate restTemplate() {
@@ -36,4 +27,15 @@ public class RestTemplateConfig {
         factory.setReadTimeout(READ_TIMEOUT);
         return factory;
     }
+
+   /* @Bean
+    public RetryTemplate retryTemplate(){
+        RetryTemplate retryTemplate = new RetryTemplate();
+        SimpleRetryPolicy retryPolicy = new SimpleRetryPolicy();
+        retryPolicy.setMaxAttempts(3);
+        retryTemplate.setRetryPolicy(retryPolicy);
+        return retryTemplate;
+    }*/
+
+
 }
